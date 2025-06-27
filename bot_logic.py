@@ -10,17 +10,15 @@ class TradingBot:
         self.stop_loss = stop_loss / 100
 
     def get_bars(self):
-        barset = self.api.get_barset(self.symbol, '5Min', limit=50)
-        bars = barset[self.symbol]
-        data = [{
-            't': bar.t,
-            'o': bar.o,
-            'h': bar.h,
-            'l': bar.l,
-            'c': bar.c,
-            'v': bar.v
-        } for bar in bars]
-        return pd.DataFrame(data)
+        # Fetch recent 5-minute bars (limit 50)
+        bars = self.api.get_bars(self.symbol, tradeapi.TimeFrame(5, tradeapi.TimeFrameUnit.Minute), limit=50).df
+
+        # Filter bars for the symbol only, since get_bars returns all symbols if multiple requested
+        df = bars[bars['symbol'] == self.symbol].copy()
+
+        # Rename columns for consistency
+        df.rename(columns={'t':'t', 'o':'o', 'h':'h', 'l':'l', 'c':'c', 'v':'v'}, inplace=True)
+        return df
 
     def check_dip_buy(self, df):
         # Simple logic: buy if last candle closes below MA20
